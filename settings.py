@@ -1,0 +1,11 @@
+HOST = "irc.twitch.tv"
+PORT = 6667
+NEW_HOST = "irc.chat.twitch.tv"
+NEW_PORT = 80
+WHISPERHOST = "199.9.253.119"
+WHISPERPORT = 443
+PASS = "oauth:Kappa123"
+IDENT = "nuuls"
+CHANNEL = ["nymn_hs", "pajlada", "forsenlol"]
+BOTNAMES = ["botnextdoor", "snusbot", "pajbot"]
+ADMINS = ["nuuls", IDENT]
