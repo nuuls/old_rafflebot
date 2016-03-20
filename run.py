@@ -1,6 +1,7 @@
 import time
 import sys
 import socket
+import random
 
 from queue import Queue
 from threading import Thread
@@ -19,6 +20,7 @@ class Main:
         self.bot.start()
         self.wr = socket.socket()
         self.wr = self.bot.conn(s=self.wr, HOST=WHISPERHOST, PORT=WHISPERPORT)
+        self.emotes = ["FeelsGoodMan", "PepeSquare", "PepeCopter", "nymnSmug", "pajaHappy", "FeelsGreatMan"]
 
     def join_channels(self):
 
@@ -87,7 +89,7 @@ class Main:
 
                 if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and " -" not in msg.lower():
                     time.sleep(3)
-                    self.bot.say("!join FeelsGoodMan", channel)
+                    self.bot.say("!join " + random.choice(self.emotes), channel)
 
 
             else:

@@ -4,7 +4,7 @@ import time
 from queue import Queue
 from threading import Thread
 
-from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST, CHANNEL, NEW_HOST, NEW_PORT
+from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST, CHANNEL
 
 
 class Bot():
@@ -17,7 +17,7 @@ class Bot():
         self.uptime = time.time()
         self.on = True
 
-    def conn(self, s=socket.socket(), HOST=NEW_HOST, PORT=NEW_PORT):
+    def conn(self, s=socket.socket(), HOST=HOST, PORT=PORT):
         #s = socket.socket()
         s.connect((HOST, PORT))
         s.send(("PASS " + PASS + "\r\n").encode("utf-8"))
