@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Thread
 
 from bot import Bot
-from settings import ADMINS, CHANNEL, WHISPERHOST, WHISPERPORT, BOTNAMES
+from settings import ADMINS, CHANNEL, WHISPERHOST, WHISPERPORT, BOTNAMES, EMOTES
 
 class Main:
 
@@ -20,7 +20,6 @@ class Main:
         self.bot.start()
         self.wr = socket.socket()
         self.wr = self.bot.conn(s=self.wr, HOST=WHISPERHOST, PORT=WHISPERPORT)
-        self.emotes = ["FeelsGoodMan", "PepeSquare", "PepeCopter", "nymnSmug", "pajaHappy", "FeelsGreatMan"]
 
     def join_channels(self):
 
@@ -87,9 +86,9 @@ class Main:
                 except:
                     pass
 
-                if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and " -" not in msg.lower():
+                if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and not " -"  in msg.lower():
                     time.sleep(3)
-                    self.bot.say("!join " + random.choice(self.emotes), channel)
+                    self.bot.say("!join " + random.choice(EMOTES), channel)
 
 
             else:
