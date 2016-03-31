@@ -66,6 +66,14 @@ class Main:
         channel = seperate[1].split(" ")[0]
         return channel
 
+    def join(self, channel, msg):
+        try:
+            s = int(msg.split(" in ")[1].split(" ")[0])
+            time.sleep(s - 3)
+            self.bot.say("!join " + random.choice(EMOTES), channel)
+        except Exception as e:
+            print(e)
+
     def read(self):
 
         while True:
@@ -87,8 +95,8 @@ class Main:
                     pass
 
                 if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and not " -"  in msg.lower():
-                    time.sleep(3)
-                    self.bot.say("!join " + random.choice(EMOTES), channel)
+                    Thread(target=self.join, args=((channel, msg))).start()
+
 
 
             else:

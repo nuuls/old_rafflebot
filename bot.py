@@ -1,10 +1,9 @@
 import socket
 import time
 
-from queue import Queue
 from threading import Thread
 
-from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST, CHANNEL
+from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST
 
 
 class Bot():
@@ -16,9 +15,9 @@ class Bot():
         self.last_msg_sent = time.time()
         self.uptime = time.time()
         self.on = True
+        self.msgs_sent = 0
 
     def conn(self, s=socket.socket(), HOST=HOST, PORT=PORT):
-        #s = socket.socket()
         s.connect((HOST, PORT))
         s.send(("PASS " + PASS + "\r\n").encode("utf-8"))
         s.send(("NICK " + IDENT + "\r\n").encode("utf-8"))
@@ -38,7 +37,7 @@ class Bot():
         if self.on:
             if self.last_msg_sent + 1.2 < time.time():
 
-                if self.last_msg_sent + 2 > time.time():
+                if self.msgs_sent %2 == 1:
                     self.sock = self.secs
                 else:
                     self.sock = self.mains
@@ -46,18 +45,16 @@ class Bot():
                     space = ""
                 else:
                     space = ". "
-                #try:
+
                 msgTemp = "PRIVMSG #" + channel + " :" + space + msg
                 self.sock.send((msgTemp + "\r\n").encode("utf-8"))
+                self.msgs_sent += 1
                 try:
                     print("sent: " + msg)
                 except:
                     print("message sent but could not print")
                 self.last_msg_sent = time.time()
-                #except:
-                #    print("disconnected, trying again")
-                #    time.sleep(2)
-                #    self.say(msg)
+
 
     def whisper(self, user, msg):
         msgTemp = "PRIVMSG #jtv :/w " + user + " " + msg
