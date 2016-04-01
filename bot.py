@@ -7,8 +7,7 @@ from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST
 
 
 class Bot():
-    mains = socket.socket()
-    secs = socket.socket()
+    s = socket.socket()
     ws = socket.socket()
 
     def __init__(self):
@@ -35,19 +34,15 @@ class Bot():
 
     def say(self, msg, channel):
         if self.on:
-            if self.last_msg_sent + 1.2 < time.time():
+            if self.last_msg_sent + 1.7 < time.time():
 
-                if self.msgs_sent %2 == 1:
-                    self.sock = self.secs
-                else:
-                    self.sock = self.mains
                 if msg.startswith("."):
                     space = ""
                 else:
                     space = ". "
 
                 msgTemp = "PRIVMSG #" + channel + " :" + space + msg
-                self.sock.send((msgTemp + "\r\n").encode("utf-8"))
+                self.s.send((msgTemp + "\r\n").encode("utf-8"))
                 self.msgs_sent += 1
                 try:
                     print("sent: " + msg)
@@ -79,12 +74,10 @@ class Bot():
                 need_to_pong = False
 
     def start(self):
-        self.mains = self.conn(self.mains)
-        self.secs = self.conn(self.secs)
+        self.s = self.conn(self.s)
         self.ws = self.conn(self.ws, HOST=WHISPERHOST, PORT=WHISPERPORT)
 
-        Thread(target=self.pong, args=(self.mains,)).start()
-        Thread(target=self.pong, args=(self.secs,)).start()
+        Thread(target=self.pong, args=(self.s,)).start()
         Thread(target=self.pong, args=(self.ws,)).start()
 
 
