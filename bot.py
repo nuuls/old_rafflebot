@@ -8,7 +8,6 @@ from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST
 
 class Bot():
     s = socket.socket()
-    ws = socket.socket()
 
     def __init__(self):
         self.last_msg_sent = time.time()
@@ -16,7 +15,9 @@ class Bot():
         self.on = True
         self.msgs_sent = 0
 
-    def conn(self, s=socket.socket(), HOST=HOST, PORT=PORT):
+    def conn(self, s=None):
+        if not s:
+            s = socket.socket()
         s.connect((HOST, PORT))
         s.send(("PASS " + PASS + "\r\n").encode("utf-8"))
         s.send(("NICK " + IDENT + "\r\n").encode("utf-8"))
@@ -51,10 +52,6 @@ class Bot():
                 self.last_msg_sent = time.time()
 
 
-    def whisper(self, user, msg):
-        msgTemp = "PRIVMSG #jtv :/w " + user + " " + msg
-        self.send_raw(self.ws, msgTemp)
-
     def pong(self, s):
         need_to_pong = True
         readbuffer = ""
@@ -75,10 +72,7 @@ class Bot():
 
     def start(self):
         self.s = self.conn(self.s)
-        self.ws = self.conn(self.ws, HOST=WHISPERHOST, PORT=WHISPERPORT)
-
         Thread(target=self.pong, args=(self.s,)).start()
-        Thread(target=self.pong, args=(self.ws,)).start()
 
 
 
