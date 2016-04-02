@@ -1,5 +1,6 @@
 import sys
 import random
+import time
 
 from queue import Queue
 from threading import Thread
@@ -15,12 +16,13 @@ class Main:
         self.q = Queue()
         self.rs = self.bot.conn()
         self.bot.start()
-        self.raffle = False
+        self.raffle = {}
 
     def join_channels(self):
 
         for channel in CHANNEL:
             self.bot.join(self.rs, channel)
+            self.raffle[channel] = False
 
     def listen(self):
 
@@ -50,6 +52,15 @@ class Main:
         channel = seperate[1].split(" ")[0]
         return channel
 
+    def reset_raffle(self, msg, channel):
+        try:
+            s = int(msg.split(" in ")[1].split(" ")[0])
+            time.sleep(s / 4 + 3)
+            self.raffle[channel] = False
+        except:
+            self.raffle[channel] = False
+
+
     def read(self):
 
         while True:
@@ -71,11 +82,12 @@ class Main:
                     pass
 
                 if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and not " -"  in msg.lower():
-                    self.raffle = True
+                    self.raffle[channel] = True
+                    Thread(target=self.reset_raffle, args=((msg, channel))).start()
 
-                if user in BOTNAMES and "raffle" in msg.lower() and "ends in" in msg.lower() and not " -"  in msg.lower() and self.raffle:
+                if user in BOTNAMES and "raffle" in msg.lower() and "ends in" in msg.lower() and not " -"  in msg.lower() and self.raffle[channel]:
                     self.bot.say("!join " + random.choice(EMOTES), channel)
-                    self.raffle = False
+                    self.raffle[channel] = False
 
             else:
                 print(line)
