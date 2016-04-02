@@ -19,6 +19,7 @@ class Main:
         self.rs = self.bot.conn()
         self.bot.start()
         self.wr = socket.socket()
+        self.raffle = False
         self.wr = self.bot.conn(s=self.wr, HOST=WHISPERHOST, PORT=WHISPERPORT)
 
     def join_channels(self):
@@ -68,8 +69,7 @@ class Main:
 
     def join(self, channel, msg):
         try:
-            s = int(msg.split(" in ")[1].split(" ")[0])
-            time.sleep(s - 3)
+            #s = int(msg.split(" in ")[1].split(" ")[0])
             self.bot.say("!join " + random.choice(EMOTES), channel)
         except Exception as e:
             print(e)
@@ -95,7 +95,12 @@ class Main:
                     pass
 
                 if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and not " -"  in msg.lower():
+                    self.raffle = True
+
+                if user in BOTNAMES and "raffle" in msg.lower() and "ends in" in msg.lower() and not " -"  in msg.lower() and self.raffle:
                     Thread(target=self.join, args=((channel, msg))).start()
+                    self.raffle = False
+
 
 
 
