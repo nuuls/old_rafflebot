@@ -89,6 +89,10 @@ class Main:
                     self.bot.say("!join " + random.choice(EMOTES), channel)
                     self.raffle[channel] = False
 
+                if user == "twitchnotify" and not " to " in msg.lower():
+                    time.sleep(3)
+                    self.bot.say("!join " + random.choice(EMOTES), channel=channel)
+
             else:
                 print(line)
 
