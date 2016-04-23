@@ -1,41 +1,22 @@
-import sys
 import random
 import time
+import sys
 
-from queue import Queue
 from threading import Thread
 
 from bot import Bot
-from settings import CHANNEL, BOTNAMES, EMOTES
+from settings import BOTNAMES, EMOTES
 
 class Main:
 
     def __init__(self):
 
         self.bot = Bot()
-        self.q = Queue()
-        self.rs = self.bot.conn()
-        self.bot.start()
+        self.q = self.bot.q
         self.raffle = {}
-
-    def join_channels(self):
-
-        for channel in CHANNEL:
-            self.bot.join(self.rs, channel)
-            self.raffle[channel] = False
-
-    def listen(self):
-
-        readbuffer = ""
-
-        while True:
-            readbuffer = readbuffer + (self.rs.recv(4096)).decode("utf-8", errors="ignore")
-            temp = readbuffer.split("\r\n")
-            readbuffer = temp.pop()
-
-            for line in temp:
-                self.q.put(line)
-
+        self.bot.raffle = self.raffle
+        self.bot.conn()
+        Thread(target=self.read).start()
 
     def getUser(self, line):
         seperate = line.split(":", 2)
@@ -55,10 +36,31 @@ class Main:
     def reset_raffle(self, msg, channel):
         try:
             s = int(msg.split(" in ")[1].split(" ")[0])
-            time.sleep(s / 4 + 3)
+            if s > 6:
+                time.sleep(s / 4 - 1)
+            self.raffle[channel] = True
+            time.sleep(2)
             self.raffle[channel] = False
         except:
             self.raffle[channel] = False
+
+    def checkForRaffle(self, msg, channel):
+        try:
+            tempmsg = msg.split(" ")
+            for i in range(len(tempmsg)):
+                if "points" in tempmsg[i]:
+                    points = tempmsg[i - 1]
+
+            if "-" not in points:
+                self.raffle[channel] = True
+                Thread(target=self.reset_raffle, args=((msg, channel))).start()
+                print("joining")
+            else:
+                print("negative raffle")
+        except:
+            print("invalid raffle")
+
+
 
 
     def read(self):
@@ -66,41 +68,32 @@ class Main:
         while True:
             line = self.q.get()
 
-            if line.startswith("PING"):
-                self.rs.send((line.replace("PING", "PONG") + "\r\n").encode("utf-8"))
-                print(line)
-                print("ponged rs")
-
-            elif "PRIVMSG" in line:
+            if "PRIVMSG" in line:
                 user = self.getUser(line)
                 msg = self.getMessage(line)
                 channel = self.getChannel(line)
 
                 try:
-                    print((channel + "#" + user + ": " + msg).encode(sys.stdout.encoding, errors="ignore"))
+                    if user in BOTNAMES:
+                        print("%s # %s : %s" % (channel, user, msg))
+                        sys.stdout.flush()
+
+
+                    if "aff" in msg.lower() and " begun " in msg.lower():
+                        self.checkForRaffle(msg, channel)
+
+                    if "aff" in msg.lower() and " ends in " in msg.lower() and self.raffle[channel]:
+                        self.bot.say("!join " + random.choice(EMOTES), channel)
+                        self.raffle[channel] = False
+
                 except:
                     pass
 
-                if user in BOTNAMES and "raffle" in msg.lower() and "begun" in msg.lower() and not " -"  in msg.lower():
-                    self.raffle[channel] = True
-                    Thread(target=self.reset_raffle, args=((msg, channel))).start()
-
-                if user in BOTNAMES and "raffle" in msg.lower() and "ends in" in msg.lower() and not " -"  in msg.lower() and self.raffle[channel]:
+                if user == "twitchnotify" and " to " not in msg:
                     self.bot.say("!join " + random.choice(EMOTES), channel)
-                    self.raffle[channel] = False
-
-                if user == "twitchnotify" and not " to " in msg.lower():
-                    time.sleep(3)
-                    self.bot.say("!join " + random.choice(EMOTES), channel=channel)
 
             else:
                 print(line)
 
+Main()
 
-def start():
-    main = Main()
-    Thread(target=main.listen).start()
-    Thread(target=main.read).start()
-    main.join_channels()
-
-start()

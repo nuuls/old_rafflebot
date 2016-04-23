@@ -1,82 +1,89 @@
 import socket
 import time
+from queue import Queue
 
 from threading import Thread
 
-from settings import HOST, PORT, IDENT, PASS, WHISPERPORT, WHISPERHOST
+from settings import HOST, PORT, IDENT, PASS, CHANNEL
 
 
 class Bot():
-    s = socket.socket()
 
     def __init__(self):
         self.last_msg_sent = time.time()
-        self.uptime = time.time()
-        self.on = True
-        self.msgs_sent = 0
+        self.q = Queue()
 
-    def conn(self, s=None):
-        if not s:
-            s = socket.socket()
+    def conn(self):
+        s = socket.socket()
         s.connect((HOST, PORT))
         s.send(("PASS " + PASS + "\r\n").encode("utf-8"))
         s.send(("NICK " + IDENT + "\r\n").encode("utf-8"))
         print("connected")
-        return s
+        self.s = s
+        Thread(target=self.listen).start()
+        Thread(target=self.join_channels).start()
+        Thread(target=self.ping).start()
 
-    def join(self, s, channel):
-        time.sleep(2)
-        s.send(("JOIN #" + channel + "\r\n").encode("utf-8"))
+
+    def join(self, channel):
+        self.send_raw("JOIN #" + channel)
         print("joined " + channel)
 
-    def send_raw(self, s, msg):
-        s.send((msg + "\r\n").encode("utf-8"))
+    def join_channels(self):
+        for channel in CHANNEL:
+            self.join(channel)
+            self.raffle[channel] = False
+        time.sleep(5)
+
+    def send_raw(self, msg):
+        self.s.send((msg + "\r\n").encode("utf-8"))
         print("sent: " + msg)
 
     def say(self, msg, channel):
-        if self.on:
-            if self.last_msg_sent + 1.7 < time.time():
+        if self.last_msg_sent + 1.7 < time.time():
 
-                if msg.startswith("."):
-                    space = ""
-                else:
-                    space = ". "
+            if msg.startswith("."):
+                space = ""
+            else:
+                space = ". "
 
-                msgTemp = "PRIVMSG #" + channel + " :" + space + msg
-                self.s.send((msgTemp + "\r\n").encode("utf-8"))
-                self.msgs_sent += 1
-                try:
-                    print("sent: " + msg)
-                except:
-                    print("message sent but could not print")
-                self.last_msg_sent = time.time()
-
-
-    def pong(self, s):
-        need_to_pong = True
-        readbuffer = ""
-        while need_to_pong:
-
+            msgTemp = "PRIVMSG #" + channel + " :" + space + msg
+            self.send_raw(msgTemp)
             try:
-                readbuffer = readbuffer + (s.recv(1024)).decode("utf-8")
-                temp = readbuffer.split("\r\n")
-                readbuffer = temp.pop()
-
-                for line in temp:
-                    if line.startswith("PING"):
-                        print(line)
-                        self.send_raw(s, line.replace("PING", "PONG"))
+                print("sent: " + msg)
             except:
-                print("no longer ponging")
-                need_to_pong = False
+                print("message sent but could not print")
+            self.last_msg_sent = time.time()
 
-    def start(self):
-        self.s = self.conn(self.s)
-        Thread(target=self.pong, args=(self.s,)).start()
+    def ping(self):
+        while True:
+            try:
+                while True:
+                    time.sleep(60)
+                    self.send_raw("PING")
+            except:
+                print("reconnecting in 30 seconds...")
+                time.sleep(30)
+                self.conn()
 
 
+    def listen(self):
+        while True:
+            try:
+                readbuffer = ""
+                while True:
 
+                    readbuffer = readbuffer + (self.s.recv(4096)).decode("utf-8", errors="ignore")
+                    temp = readbuffer.split("\r\n")
+                    readbuffer = temp.pop()
 
-
-
-
+                    for line in temp:
+                        if line.startswith("PING"):
+                            print(line)
+                            self.send_raw(line.replace("PING", "PONG"))
+                        else:
+                            self.q.put(line)
+            except:
+                print("reconnecting in 30 seconds...")
+                time.sleep(30)
+                self.conn()
